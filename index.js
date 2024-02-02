@@ -15,6 +15,7 @@ app.use(
 
 // create model user on mongo
 require('./models/userModel')
+const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
 // const dashboardRoutes = require('./routes/Dashboard')
 
@@ -46,6 +47,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Define routes
 
 app.use('/', userRoutes)
+app.use('/', fileRoutes)
 // app.use('/', dashboardRoutes)
 app.use((req, res) => {
   res.status(404).send('Sorry, the requested page could not be found')
