@@ -7,9 +7,12 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 const User = mongoose.model('users')
-const UserInfo = mongoose.model('userInfo')
+const usersInfo = mongoose.model('usersinfos')
+const Counter = mongoose.model('counters')
+
 const router = express.Router()
 router.use(express.json())
+// const transporter = nodemailer.createTransport(transportOptions);
 
 /*
 authenticate user
@@ -93,7 +96,6 @@ router.post('/api/protected/check_email', async (req, res) => {
     if (existingUser) {
       return res.status(204).json({ message: 'Email already exists' })
     }
-    console.log(req.body)
     res.status(201).json({ message: 'email validated' })
   } catch (error) {
     console.error(error)
@@ -106,67 +108,66 @@ router.post('/api/protected/check_email', async (req, res) => {
 
 router.post('/api/protected/register', async (req, res) => {
   const confirmationCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-  const { firstName, lastName, password, email, idNumber, dateOfBirth, phone } = req.body
+  const { firstName, lastName, email, idOrPassportNumber, dateOfBirth, phone, preferredName, userRole } = req.body
   // Hash the password
   const salt = await bcrypt.genSalt(10)
+  const password = generateRandomPassword()
   const hashedPassword = await bcrypt.hash(password, salt)
   try {
     const createdUser = await User.create({
-      firstName,
-      lastName,
+      userRole,
+      userName: preferredName,
       password: hashedPassword,
       email,
-      idNumber,
-      dateOfBirth,
-      height,
-      weight,
-      gender,
-      mobileNumber,
-      telephoneNumber,
-      address1,
-      address2,
-      city,
-      postal,
-      province,
-      userType: 'patient',
-      patientCode,
-      caregiverEmail,
-      confirmationCode: confirmationCode,
-      confirmed: false,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      confirmationCode,
+      confirmed: false
     })
 
-    // Generate JWT token
-    const token = jwt.sign({ userId: createdUser._id, userType: createdUser.userType }, process.env.JWT_SECRET, {
-      expiresIn: '1d'
+    // Create user info with the generated member code
+    const counter = await Counter.findByIdAndUpdate(
+      { _id: 'memberCode' },
+      { $inc: { sequence_value: 1 } },
+      { new: true, upsert: true }
+    )
+    const createdUserInfo = await usersInfo.create({
+      usersID: createdUser.id,
+      firstName,
+      lastName,
+      phoneNumber: phone,
+      dateOfBirth,
+      memberCode: counter.sequence_value.toString().padStart(4, '0'), // Use the generated member code
+      idNumber: idOrPassportNumber
     })
-    req.session.token = token
 
     // send confirmation email
-    const mailOptions = {
-      from: 'hello@cannabishealth.co.za',
-      to: email,
-      subject: 'Cannabis health email confirmattion',
-      html: `
-    <h1>Confirm Your Email Address</h1>
-    <p>Please click on the following link to confirm your email address:</p>
-    <a href="${process.env.CLIENT_URL + '/confirm-email/' + confirmationCode}">${
-        process.env.CLIENT_URL + '/confirm-email/' + confirmationCode
-      }</a>
-  `
-    }
+    //   const mailOptions = {
+    //     from: 'hello@cannabishealth.co.za',
+    //     to: email,
+    //     subject: 'Cannabis health email confirmattion',
+    //     html: `
+    //   <h1>Confirm Your Email Address</h1>
+    //   <p>Please click on the following link to confirm your email address:</p>
+    //   <a href="${process.env.CLIENT_URL + '/confirm-email/' + confirmationCode}">${
+    //       process.env.CLIENT_URL + '/confirm-email/' + confirmationCode
+    //     }</a>
+    // `
+    //   }
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error)
-      } else {
-        console.log('Email sent: ' + info.response)
-      }
-    })
+    // transporter.sendMail(mailOptions, (error, info) => {
+    //   if (error) {
+    //     console.log(error)
+    //   } else {
+    //     console.log('Email sent: ' + info.response)
+    //   }
+    // })
 
-    res.send({ status: 'registered' })
+    res.status(201).json({ message: 'user Created' })
   } catch (error) {
-    res.send({ status: 'error' })
+    console.error(error) // Log the error for debugging purposes
+
+    res.status(500).json({ error: 'Internal Server Error', details: error.message })
   }
 })
 //---------------------------------------------------------------------------------------------
@@ -195,5 +196,32 @@ router.get('/logout', (req, res) => {
     console.log(error)
   }
 })
+
+//-------------------------------------------HELPERS--------------------------------------------------
+//generate password
+function generateRandomPassword() {
+  // Define the character sets for the password
+  const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz'
+  const numbers = '0123456789'
+  const specialCharacters = '!@#$%^&*()_+[]{}|;:,.<>?'
+
+  // Combine all character sets
+  const allCharacters = uppercaseLetters + lowercaseLetters + numbers + specialCharacters
+
+  // Function to get a random character from the character set
+  const getRandomCharacter = characterSet => {
+    const randomIndex = Math.floor(Math.random() * characterSet.length)
+    return characterSet.charAt(randomIndex)
+  }
+
+  // Generate the password
+  let password = ''
+  for (let i = 0; i < 6; i++) {
+    password += getRandomCharacter(allCharacters)
+  }
+
+  return password
+}
 
 module.exports = router
