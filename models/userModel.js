@@ -9,8 +9,7 @@ const userSchema = new Schema({
   },
   userName: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   password: {
     type: String,
@@ -28,7 +27,9 @@ const userSchema = new Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  confirmationCode: { type: String },
+  confirmed: { type: Boolean, default: false }
 })
 
 // Static method to create the initial superadmin account
@@ -47,7 +48,8 @@ userSchema.statics.createSuperAdmin = async function () {
     userRole: 'superadmin', // Specify the role for the superadmin
     userName: 'superadmin',
     password: hashedPassword, // Replace with a secure password or hash
-    email: 'jhay.dev1840@gmail.com'
+    email: 'jhay.dev1840@gmail.com',
+    confirmed: false
   })
 
   console.log('Superadmin account created successfully.')

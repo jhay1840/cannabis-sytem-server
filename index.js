@@ -15,6 +15,8 @@ app.use(
 
 // create model user on mongo
 require('./models/userModel')
+require('./models/userInfoModel')
+
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
 // const dashboardRoutes = require('./routes/Dashboard')

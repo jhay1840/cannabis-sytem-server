@@ -38,8 +38,7 @@ const userSchema = new Schema({
   },
   idNumber: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   }
 })
 
@@ -58,6 +57,7 @@ userSchema.pre('save', async function (next) {
   next()
 })
 
-const usersCollections = mongoose.model('userInfo', userSchema)
+const usersinfosCollections = mongoose.model('usersinfos', userSchema)
+const counter = mongoose.model('counters', CounterSchema)
 
-module.exports = usersCollections
+module.exports = usersinfosCollections
