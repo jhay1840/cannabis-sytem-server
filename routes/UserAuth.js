@@ -108,7 +108,8 @@ router.post('/api/protected/check_email', async (req, res) => {
 
 router.post('/api/protected/register', async (req, res) => {
   const confirmationCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-  const { firstName, lastName, email, idOrPassportNumber, dateOfBirth, phone, preferredName, userRole } = req.body
+  const { firstName, lastName, email, idOrPassportNumber, dateOfBirth, gender, phone, preferredName, userRole } =
+    req.body
   // Hash the password
   const salt = await bcrypt.genSalt(10)
   const password = generateRandomPassword()
@@ -137,6 +138,7 @@ router.post('/api/protected/register', async (req, res) => {
       lastName,
       phoneNumber: phone,
       dateOfBirth,
+      gender,
       memberCode: counter.sequence_value.toString().padStart(4, '0'), // Use the generated member code
       idNumber: idOrPassportNumber
     })

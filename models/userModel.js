@@ -55,10 +55,13 @@ userSchema.statics.createSuperAdmin = async function () {
   console.log('Superadmin account created successfully.')
   return superAdmin
 }
+
 const User = mongoose.model('users', userSchema)
+
 async function initializeSuperAdmin() {
   try {
     const superAdmin = await User.createSuperAdmin()
+
     // console.log('Superadmin account details:', superAdmin)
   } catch (error) {
     console.error('Error creating superadmin account:', error)
