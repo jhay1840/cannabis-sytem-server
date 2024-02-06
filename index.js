@@ -14,12 +14,13 @@ app.use(
 // app.use(cors());
 
 // create model user on mongo
+
 require('./models/userModel')
 require('./models/userInfoModel')
 
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
-// const dashboardRoutes = require('./routes/Dashboard')
+const memberRoutes = require('./routes/MemberData')
 
 // add cookie session
 const cookieSession = require('cookie-session')
@@ -50,6 +51,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 app.use('/', userRoutes)
 app.use('/', fileRoutes)
+app.use('/', memberRoutes)
 // app.use('/', dashboardRoutes)
 app.use((req, res) => {
   res.status(404).send('Sorry, the requested page could not be found')
