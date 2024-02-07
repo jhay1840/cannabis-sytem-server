@@ -61,22 +61,43 @@ router.get('/api/protected/members', async (req, res) => {
   }
 })
 
-// Define endpoint for querying by firstName or lastName
-router.get('/api/protected/members', async (req, res) => {
-  const { queryParam } = req.query
-
+// New endpoint for searching by first name and last name
+router.get('/api/protected/members/search', async (req, res) => {
   try {
-    const users = await User.find({
-      $or: [
-        { firstName: { $regex: new RegExp(queryParam, 'i') } },
-        { lastName: { $regex: new RegExp(queryParam, 'i') } }
-      ]
-    })
+    const { query } = req.query
 
-    res.json(users)
+    if (!query) {
+      return res.status(400).json({ error: 'Please provide a search query.' })
+    }
+
+    const searchQuery = {
+      $or: [
+        { 'userInfo.firstName': { $regex: new RegExp(query, 'i') } },
+        { 'userInfo.lastName': { $regex: new RegExp(query, 'i') } }
+      ]
+    }
+
+    const result = await usersInfo.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'usersID',
+          foreignField: '_id',
+          as: 'userInfo'
+        }
+      },
+      {
+        $match: {
+          memberCode: { $ne: '0000' },
+          ...searchQuery
+        }
+      }
+    ])
+
+    res.json(result)
   } catch (error) {
     console.error(error)
-    res.status(500).send('Server Error')
+    res.status(500).send('Internal Server Error')
   }
 })
 

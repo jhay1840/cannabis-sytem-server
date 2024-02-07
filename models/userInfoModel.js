@@ -44,15 +44,26 @@ const userSchema = new Schema({
   },
   credits: {
     type: Number,
-    required: false
+    required: false,
+    default: 0
   },
-  Gender: {
+  gender: {
     type: String,
     required: false
   },
-  ExpiryDate: {
+  expiryDate: {
     type: Date,
     required: false
+  },
+  receiveUpdates: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
+  subscribeToNewsletter: {
+    type: Boolean,
+    required: false,
+    default: false
   }
 })
 
