@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
+const { Profiler } = require('react')
 // const nodemailer = require('nodemailer')
 dotenv.config()
 
@@ -64,17 +65,14 @@ router.get('/api/protected/members', async (req, res) => {
 // New endpoint for searching by first name and last name
 router.get('/api/protected/members/search', async (req, res) => {
   try {
-    const { query } = req.query
+    const { name } = req.query
 
-    if (!query) {
-      return res.status(400).json({ error: 'Please provide a search query.' })
+    if (!name) {
+      return res.status(201).json({ error: 'Please provide a search query.' + name })
     }
 
     const searchQuery = {
-      $or: [
-        { 'userInfo.firstName': { $regex: new RegExp(query, 'i') } },
-        { 'userInfo.lastName': { $regex: new RegExp(query, 'i') } }
-      ]
+      $or: [{ firstName: { $regex: new RegExp(name, 'i') } }, { lastName: { $regex: new RegExp(name, 'i') } }]
     }
 
     const result = await usersInfo.aggregate([
@@ -90,6 +88,70 @@ router.get('/api/protected/members/search', async (req, res) => {
         $match: {
           memberCode: { $ne: '0000' },
           ...searchQuery
+        }
+      }
+    ])
+
+    res.json(result)
+  } catch (error) {
+    console.error(error)
+    res.status(500).send('Internal Server Error')
+  }
+})
+
+// New endpoint for searching by first name and last name
+router.get('/api/protected/members/searchbyid', async (req, res) => {
+  try {
+    const { id } = req.query
+
+    if (!id) {
+      return res.status(201).json({ error: 'Please provide a search query.' })
+    }
+
+    const searchQuery = {
+      $or: [{ memberCode: { $regex: new RegExp(id, 'i') } }]
+    }
+
+    const result = await usersInfo.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'usersID',
+          foreignField: '_id',
+          as: 'userInfo'
+        }
+      },
+      {
+        $match: {
+          memberCode: { $ne: '0000' },
+          ...searchQuery
+        }
+      }
+    ])
+
+    res.json(result)
+  } catch (error) {
+    console.error(error)
+    res.status(500).send('Internal Server Error')
+  }
+})
+// fetch member Profile
+router.get('/api/protected/members/:memberCode', async (req, res) => {
+  try {
+    const memberCode = req.params.memberCode
+
+    const result = await usersInfo.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'usersID',
+          foreignField: '_id',
+          as: 'userInfo'
+        }
+      },
+      {
+        $match: {
+          memberCode: memberCode // Match the member code from the request URL
         }
       }
     ])
