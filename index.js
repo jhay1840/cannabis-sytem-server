@@ -17,6 +17,7 @@ app.use(
 
 require('./models/userModel')
 require('./models/userInfoModel')
+require('./models/productModel')
 
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')

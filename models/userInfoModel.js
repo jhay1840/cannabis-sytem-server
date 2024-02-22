@@ -64,6 +64,18 @@ const userSchema = new Schema({
     type: Boolean,
     required: false,
     default: false
+  },
+  profileImagePath: {
+    type: String,
+    required: false
+  },
+  signatureImagePath: {
+    type: String,
+    required: false
+  },
+  contractPath: {
+    type: String,
+    required: false
   }
 })
 
