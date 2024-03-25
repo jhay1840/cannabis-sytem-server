@@ -4,6 +4,7 @@ const multer = require('multer')
 const path = require('path')
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
+const fs = require('fs')
 
 const Products = mongoose.model('cannabisproducts')
 
@@ -108,9 +109,19 @@ router.post(
     try {
       if (req.file) {
         // Handle the file upload here, e.g., save the file path to a database
-        const filePath = req.file.path
-        console.log('File saved at:', filePath)
-        res.send(filePath)
+        const tempPath = req.file.path
+        const targetPath = path.join(__dirname, '..', '..', 'public', 'images', 'productImages', req.file.filename)
+
+        fs.rename(tempPath, targetPath, err => {
+          if (err) return res.status(500).send(err)
+
+          // File moved successfully, you can send a response or do further processing here
+          const indexOfImages = targetPath.indexOf('\\images')
+
+          // Extract the portion of the path starting from "/images"
+          const modifiedPath = targetPath.substring(indexOfImages)
+          res.send(modifiedPath)
+        })
       } else {
         // No file provided
         res.send('')
@@ -164,6 +175,61 @@ router.post('/api/protected/addProduct', async (req, res) => {
   } catch (error) {
     console.error(error) // Log the error for debugging purposes
 
+    res.status(500).json({ error: 'Internal Server Error', details: error.message })
+  }
+})
+//---------------------------------------------------------------------------------------------
+// endpoint for updating products
+router.post('/api/protected/updateProduct', async (req, res) => {
+  const {
+    id,
+    name,
+    secondBreed,
+    type,
+    sativa,
+    thc,
+    cbd,
+    cbn,
+    description,
+    medicalDescription,
+    category,
+    productImageUrl,
+    salePrice,
+    costPrice
+  } = req.body
+
+  try {
+    // Find the product by its ID and update it
+    const updatedProduct = await Products.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: {
+          name,
+          secondBreed,
+          type,
+          sativaPercent: sativa,
+          THCpercent: thc,
+          CBDpercent: cbd,
+          CBNpercent: cbn,
+          description,
+          medDescription: medicalDescription,
+          category,
+          lastUpdated: Date.now(),
+          imageURL: productImageUrl,
+          salePrice,
+          costPrice
+        }
+      },
+      { new: true } // Return the updated document
+    )
+
+    if (!updatedProduct) {
+      return res.status(404).json({ error: 'Product not found' + id })
+    }
+
+    res.status(201).json({ product: updatedProduct })
+  } catch (error) {
+    console.error(error) // Log the error for debugging purposes
     res.status(500).json({ error: 'Internal Server Error', details: error.message })
   }
 })
