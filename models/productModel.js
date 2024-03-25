@@ -20,7 +20,8 @@ const cannabisSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
   imageURL: { type: String },
   salePrice: { type: Number, default: 0 },
-  costPrice: { type: Number, default: 0 }
+  costPrice: { type: Number, default: 0 },
+  stock: { type: Number, default: 0 }
 })
 
 // Create model from the schema

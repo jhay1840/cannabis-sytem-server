@@ -18,10 +18,13 @@ app.use(
 require('./models/userModel')
 require('./models/userInfoModel')
 require('./models/productModel')
+require('./models/cannabisTransactionModel')
 
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
 const memberRoutes = require('./routes/MemberData')
+const productRoutes = require('./routes/ProductData')
+const transactionRoutes = require('./routes/TransactionData')
 
 // add cookie session
 const cookieSession = require('cookie-session')
@@ -49,10 +52,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
 
 // Define routes
-
 app.use('/', userRoutes)
 app.use('/', fileRoutes)
 app.use('/', memberRoutes)
+app.use('/', productRoutes)
+app.use('/', transactionRoutes)
+
 // app.use('/', dashboardRoutes)
 app.use((req, res) => {
   res.status(404).send('Sorry, the requested page could not be found')
