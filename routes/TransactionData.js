@@ -9,6 +9,7 @@ const User = mongoose.model('users')
 const usersInfo = mongoose.model('usersinfos')
 const Product = mongoose.model('cannabisproducts')
 const Stocks = mongoose.model('cannabismovements')
+const Credits = mongoose.model('membercredits')
 
 const router = express.Router()
 router.use(express.json())
@@ -70,7 +71,7 @@ router.post('/api/protected/addStocks', async (req, res) => {
       movementsInStash: intStash,
       movementsExtStash: exStash,
       comments,
-      createdBy: req.user.userId
+      createdBy: req.user.userName
     })
     // Update the stock of the product in the Product model
     const product = await Product.findById(productId)
@@ -79,7 +80,7 @@ router.post('/api/protected/addStocks', async (req, res) => {
     }
 
     // Update the product's stock based on the new stock transaction
-    product.stock += amountPurchased
+    product.stock += realWeight
     await product.save()
 
     // Send success response with created stock data
@@ -87,6 +88,81 @@ router.post('/api/protected/addStocks', async (req, res) => {
   } catch (error) {
     console.error('Error adding stocks:', error)
     res.status(500).json({ error: 'An error occurred while adding stocks' })
+  }
+})
+
+// GET all Transactions or search transaction by name
+router.get('/api/protected/cannabisTransactions', async (req, res) => {
+  try {
+    const { search, productId } = req.query // Get the search query from the request query parameters
+
+    let transactions
+    if (productId && productId.trim() !== '') {
+      // If productId is provided, filter transactions by productId
+      transactions = await Stocks.find({ productId: productId.trim() }).sort({ transactionDate: -1 })
+    } else {
+      // Otherwise, fetch all products
+      transactions = await Stocks.find().sort({ transactionDate: -1 })
+    }
+
+    res.json(transactions)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// adding credit route
+router.post('/api/protected/updateCredits', async (req, res) => {
+  try {
+    const { memberCode, amount, comments, paidBy } = req.body
+
+    // Find user by member code and update credits
+    const user = await usersInfo.findOne({ memberCode })
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Update user's credits
+    user.credits += amount
+    await user.save()
+
+    // Log credit update transaction
+    const transaction = new Credits({
+      memberCode,
+      transactionType: 'Donation',
+      amount,
+      creditBefore: user.credits - amount,
+      creditAfter: user.credits,
+      comments,
+      paidBy,
+      createdBy: req.user.userName
+    })
+    await transaction.save()
+
+    return res.status(200).json({ message: 'Credits updated successfully' })
+  } catch (error) {
+    console.error('Error updating credits:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// GET all credit Transactions or search transaction by name
+router.get('/api/protected/creditTransactions', async (req, res) => {
+  try {
+    const { search, memberId } = req.query // Get the search query from the request query parameters
+
+    let transactions
+    if (memberId && memberId.trim() !== '') {
+      // If productId is provided, filter transactions by productId
+      transactions = await Credits.find({ memberCode: memberId.trim() }).sort({ transactionDate: -1 })
+    } else {
+      // Otherwise, fetch all products
+      transactions = await Credits.find().sort({ transactionDate: -1 })
+    }
+
+    res.json(transactions)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
 })
 

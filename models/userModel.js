@@ -34,7 +34,7 @@ const userSchema = new Schema({
 
 // Static method to create the initial superadmin account
 userSchema.statics.createSuperAdmin = async function () {
-  const existingSuperAdmin = await this.findOne({ userName: 'superadmin' })
+  const existingSuperAdmin = await this.findOne({ userName: 'erickadmin' })
 
   if (existingSuperAdmin) {
     // console.log('Superadmin account already exists.')
@@ -46,7 +46,7 @@ userSchema.statics.createSuperAdmin = async function () {
   const hashedPassword = await bcrypt.hash('AAdynamics2023!', salt)
   const superAdmin = await this.create({
     userRole: 'superadmin', // Specify the role for the superadmin
-    userName: 'superadmin',
+    userName: 'erickadmin',
     password: hashedPassword, // Replace with a secure password or hash
     email: 'jhay.dev1840@gmail.com',
     confirmed: false
