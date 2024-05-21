@@ -10,6 +10,7 @@ const usersInfo = mongoose.model('usersinfos')
 const Product = mongoose.model('cannabisproducts')
 const Stocks = mongoose.model('cannabismovements')
 const Credits = mongoose.model('membercredits')
+const DispenseTransaction = mongoose.model('dispensetransactions')
 
 const router = express.Router()
 router.use(express.json())
@@ -163,6 +164,96 @@ router.get('/api/protected/creditTransactions', async (req, res) => {
     res.json(transactions)
   } catch (err) {
     res.status(500).json({ message: err.message })
+  }
+})
+
+router.get('/api/protected/dispenseTransactions', async (req, res) => {
+  try {
+    const { memberId, productId, search } = req.query // Get memberId, productId, and search from the query parameters
+
+    let transactions
+    if (memberId && memberId.trim() !== '') {
+      // Filter transactions by memberId
+      transactions = await DispenseTransaction.find({ memberCode: memberId.trim() }).sort({ transactionDate: -1 })
+    } else {
+      // Fetch all transactions if no memberId is provided
+      transactions = await DispenseTransaction.find().sort({ transactionDate: -1 })
+    }
+
+    if (productId && productId.trim() !== '') {
+      // Filter transactions to only include those that contain the specified productId
+      transactions = transactions.filter(transaction =>
+        transaction.products.some(product => product.productId.toString() === productId.trim())
+      )
+    }
+
+    if (search && search.trim() !== '') {
+      const searchTerm = search.trim().toLowerCase()
+      // Further filter transactions based on the search term
+      transactions = transactions.filter(transaction => {
+        // Check comments, createdBy, and product names
+        const matchesComments = transaction.comments.toLowerCase().includes(searchTerm)
+        const matchesCreatedBy = transaction.createdBy.toLowerCase().includes(searchTerm)
+        const matchesProductName = transaction.products.some(product => product.name.toLowerCase().includes(searchTerm))
+        return matchesComments || matchesCreatedBy || matchesProductName
+      })
+    }
+
+    res.json(transactions)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+//checkout process
+router.post('/api/protected/checkout', async (req, res) => {
+  const { memberCode, checkoutDate, comments, isGift, products } = req.body
+
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    // 1. Update member's credits (assuming each product has a weight and the credits are reduced accordingly)
+    const user = await usersInfo.findOne({ memberCode }).session(session)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const totalCredits = products.reduce((total, product) => total + product.subtotal, 0)
+    user.credits -= totalCredits
+    await user.save({ session })
+
+    // 2. Create a new transaction
+    const transaction = new DispenseTransaction({
+      memberCode,
+      checkoutDate,
+      comments,
+      isGift,
+      products,
+      amountTotal: totalCredits,
+      createdBy: req.user.userName
+    })
+    await transaction.save({ session })
+
+    // 3. Update product weights
+    for (const product of products) {
+      const productRecord = await Product.findById(product.productId).session(session)
+      if (!productRecord) {
+        throw new Error(`Product not found: ${product.productId}`)
+      }
+      productRecord.stock -= product.weight
+      await productRecord.save({ session })
+    }
+
+    await session.commitTransaction()
+    session.endSession()
+
+    res.status(200).send('Checkout successful')
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    console.error('Error during checkout:', error)
+    res.status(500).send('Checkout failed. Please try again.')
   }
 })
 

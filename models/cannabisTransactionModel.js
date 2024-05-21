@@ -47,7 +47,7 @@ cannabisMovementSchema.pre('save', async function (next) {
     }
 
     // Format the new transaction ID with leading zeros
-    const formattedId = `TRN${nextIdNumber.toString().padStart(4, '0')}`
+    const formattedId = `TRN${nextIdNumber.toString().padStart(5, '0')}`
     this.transactionId = formattedId
 
     next()

@@ -64,7 +64,7 @@ router.get('/api/protected/cannabisProducts', async (req, res) => {
   }
 })
 
-// fetch member Profile
+// fetch product
 router.get('/api/protected/cannabisProducts/:productCode', async (req, res) => {
   try {
     const productCode = req.params.productCode

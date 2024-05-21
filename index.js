@@ -20,6 +20,7 @@ require('./models/userInfoModel')
 require('./models/productModel')
 require('./models/cannabisTransactionModel')
 require('./models/creditsTransactionModel')
+require('./models/dispenseTransactionModel')
 
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
