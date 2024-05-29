@@ -21,12 +21,14 @@ require('./models/productModel')
 require('./models/cannabisTransactionModel')
 require('./models/creditsTransactionModel')
 require('./models/dispenseTransactionModel')
+require('./models/closeStocksModel')
 
 const fileRoutes = require('./routes/FileHandling')
 const userRoutes = require('./routes/UserAuth')
 const memberRoutes = require('./routes/MemberData')
 const productRoutes = require('./routes/ProductData')
 const transactionRoutes = require('./routes/TransactionData')
+const stocksRoute = require('./routes/StocksData')
 
 // add cookie session
 const cookieSession = require('cookie-session')
@@ -59,6 +61,7 @@ app.use('/', fileRoutes)
 app.use('/', memberRoutes)
 app.use('/', productRoutes)
 app.use('/', transactionRoutes)
+app.use('/', stocksRoute)
 
 // app.use('/', dashboardRoutes)
 app.use((req, res) => {
