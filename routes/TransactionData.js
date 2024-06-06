@@ -15,19 +15,43 @@ const DispenseTransaction = mongoose.model('dispensetransactions')
 const router = express.Router()
 router.use(express.json())
 
-function authenticateToken(req, res, next) {
+// Middleware to authenticate the user
+function authenticateTokenUser(req, res, next) {
   const token = req.session.token
   if (token == null) {
-    return res.sendStatus(401)
+    return res.sendStatus(401) // Unauthorized
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
     req.user = user
     next()
   })
 }
-router.use('/api/protected', authenticateToken)
+function authenticateToken(req, res, next) {
+  const token = req.session.token
+  if (token == null) {
+    return res.sendStatus(401) // Unauthorized
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
+    req.user = user
+    // Assuming the token contains a user object with a role property
+    if (req.user.userRole !== 'superadmin' && req.user.userRole !== 'admin') {
+      return res.sendStatus(403).send(req.user.userRole) // Forbidden
+    }
+
+    next()
+  })
+}
+
+router.use('/api/user/protected/', authenticateTokenUser)
+router.use('/api/protected/', authenticateToken)
 
 // POST route to add a new transaction
 router.post('/api/protected/addStocks', async (req, res) => {
@@ -166,8 +190,63 @@ router.get('/api/protected/creditTransactions', async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 })
+// GET all credit Transactions or search transaction by name
+router.get('/api/user/protected/creditTransactions', async (req, res) => {
+  try {
+    const { search, memberId } = req.query // Get the search query from the request query parameters
 
+    let transactions
+    if (memberId && memberId.trim() !== '') {
+      // If productId is provided, filter transactions by productId
+      transactions = await Credits.find({ memberCode: memberId.trim() }).sort({ transactionDate: -1 })
+    } else {
+      // Otherwise, fetch all products
+      transactions = await Credits.find().sort({ transactionDate: -1 })
+    }
+
+    res.json(transactions)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
 router.get('/api/protected/dispenseTransactions', async (req, res) => {
+  try {
+    const { memberId, productId, search } = req.query // Get memberId, productId, and search from the query parameters
+
+    let transactions
+    if (memberId && memberId.trim() !== '') {
+      // Filter transactions by memberId
+      transactions = await DispenseTransaction.find({ memberCode: memberId.trim() }).sort({ transactionDate: -1 })
+    } else {
+      // Fetch all transactions if no memberId is provided
+      transactions = await DispenseTransaction.find().sort({ transactionDate: -1 })
+    }
+
+    if (productId && productId.trim() !== '') {
+      // Filter transactions to only include those that contain the specified productId
+      transactions = transactions.filter(transaction =>
+        transaction.products.some(product => product.productId.toString() === productId.trim())
+      )
+    }
+
+    if (search && search.trim() !== '') {
+      const searchTerm = search.trim().toLowerCase()
+      // Further filter transactions based on the search term
+      transactions = transactions.filter(transaction => {
+        // Check comments, createdBy, and product names
+        const matchesComments = transaction.comments.toLowerCase().includes(searchTerm)
+        const matchesCreatedBy = transaction.createdBy.toLowerCase().includes(searchTerm)
+        const matchesProductName = transaction.products.some(product => product.name.toLowerCase().includes(searchTerm))
+        return matchesComments || matchesCreatedBy || matchesProductName
+      })
+    }
+
+    res.json(transactions)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+router.get('/api/user/protected/dispenseTransactions', async (req, res) => {
   try {
     const { memberId, productId, search } = req.query // Get memberId, productId, and search from the query parameters
 

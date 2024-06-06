@@ -7,12 +7,13 @@ dotenv.config()
 
 const User = mongoose.model('users')
 const ClosingStock = mongoose.model('closingstocks')
+const Product = mongoose.model('cannabisproducts')
 
 const router = express.Router()
 router.use(express.json())
 
-// Middleware to authenticate the user
-function authenticateToken(req, res, next) {
+/// Middleware to authenticate the user
+function authenticateTokenUser(req, res, next) {
   const token = req.session.token
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
@@ -26,8 +27,28 @@ function authenticateToken(req, res, next) {
     next()
   })
 }
+function authenticateToken(req, res, next) {
+  const token = req.session.token
+  if (token == null) {
+    return res.sendStatus(401) // Unauthorized
+  }
 
-router.use('/api/protected', authenticateToken)
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
+    req.user = user
+    // Assuming the token contains a user object with a role property
+    if (req.user.userRole !== 'superadmin' && req.user.userRole !== 'admin') {
+      return res.sendStatus(403).send(req.user.userRole) // Forbidden
+    }
+
+    next()
+  })
+}
+
+router.use('/api/user/protected/', authenticateTokenUser)
+router.use('/api/protected/', authenticateToken)
 
 // POST endpoint to save closing stocks
 router.post('/api/protected/saveClosingStock', async (req, res) => {
@@ -84,6 +105,32 @@ router.get('/api/protected/reports', async (req, res) => {
     res.json(reports)
   } catch (error) {
     console.error('Error fetching reports:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Route to get an overview including out-of-stock count, total products count, and member count
+router.get('/api/protected/overview', async (req, res) => {
+  try {
+    // Query to count out-of-stock products, including those without a stock field
+    const outOfStockCount = await Product.countDocuments({
+      $or: [{ stock: { $lte: 0 } }, { stock: { $exists: false } }]
+    })
+
+    // Query to count total products
+    const totalProductsCount = await Product.countDocuments()
+
+    // Query to count users with the role 'member'
+    const memberCount = await User.countDocuments({ userRole: 'member' })
+
+    // Send the counts in the response
+    res.json({
+      outOfStockCount: outOfStockCount,
+      totalProductsCount: totalProductsCount,
+      memberCount: memberCount
+    })
+  } catch (error) {
+    console.error('Error fetching overview data:', error)
     res.status(500).json({ message: 'Server error' })
   }
 })

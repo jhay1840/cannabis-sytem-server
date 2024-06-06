@@ -19,20 +19,43 @@ const { ObjectId } = require('mongoose').Types
 authenticate user
 output: user 
 */
-function authenticateToken(req, res, next) {
+// Middleware to authenticate the user
+function authenticateTokenUser(req, res, next) {
   const token = req.session.token
   if (token == null) {
-    // res.redirect(process.env.CLIENT_URL + "/");
-    return res.sendStatus(401)
+    return res.sendStatus(401) // Unauthorized
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
     req.user = user
     next()
   })
 }
-router.use('/api/protected', authenticateToken)
+function authenticateToken(req, res, next) {
+  const token = req.session.token
+  if (token == null) {
+    return res.sendStatus(401) // Unauthorized
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
+    req.user = user
+    // Assuming the token contains a user object with a role property
+    if (req.user.userRole !== 'superadmin' && req.user.userRole !== 'admin') {
+      return res.sendStatus(403).send(req.user.userRole) // Forbidden
+    }
+
+    next()
+  })
+}
+
+router.use('/api/user/protected/', authenticateTokenUser)
+router.use('/api/protected/', authenticateToken)
 
 // router.get('/api/protected/cannabisProducts', async (req, res) => {
 //   try {

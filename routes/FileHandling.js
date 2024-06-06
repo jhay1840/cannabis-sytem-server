@@ -8,21 +8,44 @@ const fs = require('fs')
 
 const Products = mongoose.model('cannabisproducts')
 
+// Middleware to authenticate the user
+function authenticateTokenUser(req, res, next) {
+  const token = req.session.token
+  if (token == null) {
+    return res.sendStatus(401) // Unauthorized
+  }
+  req.user = user
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
+
+    next()
+  })
+}
 function authenticateToken(req, res, next) {
   const token = req.session.token
   if (token == null) {
-    console.log('Token is missing')
-    // res.redirect(process.env.CLIENT_URL + "/");
-    return res.sendStatus(401)
+    return res.sendStatus(401) // Unauthorized
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
+    if (err) {
+      return res.sendStatus(403) // Forbidden
+    }
+
+    // Assuming the token contains a user object with a role property
+    if (req.user.userRole !== 'superadmin' && req.user.userRole !== 'admin') {
+      return res.sendStatus(403).send(req.user.userRole) // Forbidden
+    }
+
     req.user = user
     next()
   })
 }
-router.use('/api/protected', authenticateToken)
+
+router.use('/api/user/protected/', authenticateTokenUser)
+router.use('/api/protected/', authenticateToken)
 
 // pdf storage
 const storage = multer.diskStorage({

@@ -76,6 +76,18 @@ const userSchema = new Schema({
   contractPath: {
     type: String,
     required: false
+  },
+  nationality: {
+    type: String,
+    required: false
+  },
+  idType: {
+    type: String,
+    required: false
+  },
+  consumption: {
+    type: String,
+    required: false
   }
 })
 

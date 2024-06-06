@@ -29,7 +29,15 @@ const userSchema = new Schema({
     default: Date.now
   },
   confirmationCode: { type: String },
-  confirmed: { type: Boolean, default: false }
+  confirmed: { type: Boolean, default: false },
+  resetToken: {
+    type: String,
+    default: null
+  },
+  resetTokenExpire: {
+    type: Date,
+    default: null
+  }
 })
 
 // Static method to create the initial superadmin account
@@ -43,13 +51,13 @@ userSchema.statics.createSuperAdmin = async function () {
 
   // Hash the password before storing it
   const salt = await bcrypt.genSalt(10)
-  const hashedPassword = await bcrypt.hash('AAdynamics2023!', salt)
+  const hashedPassword = await bcrypt.hash(process.env.SU_PASS, salt)
   const superAdmin = await this.create({
     userRole: 'superadmin', // Specify the role for the superadmin
     userName: 'erickadmin',
     password: hashedPassword, // Replace with a secure password or hash
     email: 'jhay.dev1840@gmail.com',
-    confirmed: false
+    confirmed: true
   })
 
   console.log('Superadmin account created successfully.')
