@@ -10,86 +10,89 @@ const CounterSchema = new Schema({
 
 const Counter = mongoose.model('Counter', CounterSchema)
 
-const userSchema = new Schema({
-  usersID: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    unique: true
+const userSchema = new Schema(
+  {
+    usersID: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      unique: true
+    },
+    memberCode: {
+      type: String,
+      required: true,
+      unique: true,
+      minlength: 4
+    },
+    firstName: {
+      type: String,
+      required: true
+    },
+    lastName: {
+      type: String,
+      required: true
+    },
+    phoneNumber: {
+      type: String,
+      required: true
+    },
+    dateOfBirth: {
+      type: Date,
+      required: true
+    },
+    idNumber: {
+      type: String,
+      required: true
+    },
+    credits: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    gender: {
+      type: String,
+      required: false
+    },
+    expiryDate: {
+      type: Date,
+      required: false
+    },
+    receiveUpdates: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    subscribeToNewsletter: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    profileImagePath: {
+      type: String,
+      required: false
+    },
+    signatureImagePath: {
+      type: String,
+      required: false
+    },
+    contractPath: {
+      type: String,
+      required: false
+    },
+    nationality: {
+      type: String,
+      required: false
+    },
+    idType: {
+      type: String,
+      required: false
+    },
+    consumption: {
+      type: String,
+      required: false
+    }
   },
-  memberCode: {
-    type: String,
-    required: true,
-    unique: true,
-    minlength: 4
-  },
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
-  phoneNumber: {
-    type: String,
-    required: true
-  },
-  dateOfBirth: {
-    type: Date,
-    required: true
-  },
-  idNumber: {
-    type: String,
-    required: true
-  },
-  credits: {
-    type: Number,
-    required: false,
-    default: 0
-  },
-  gender: {
-    type: String,
-    required: false
-  },
-  expiryDate: {
-    type: Date,
-    required: false
-  },
-  receiveUpdates: {
-    type: Boolean,
-    required: false,
-    default: false
-  },
-  subscribeToNewsletter: {
-    type: Boolean,
-    required: false,
-    default: false
-  },
-  profileImagePath: {
-    type: String,
-    required: false
-  },
-  signatureImagePath: {
-    type: String,
-    required: false
-  },
-  contractPath: {
-    type: String,
-    required: false
-  },
-  nationality: {
-    type: String,
-    required: false
-  },
-  idType: {
-    type: String,
-    required: false
-  },
-  consumption: {
-    type: String,
-    required: false
-  }
-})
+  { timestamps: true }
+)
 
 // Generate a unique member code with a minimum of 4 digits starting from 0001
 userSchema.pre('save', async function (next) {

@@ -235,4 +235,52 @@ router.get('/api/user/protected/members/:memberCode', async (req, res) => {
     res.status(500).send('Internal Server Error')
   }
 })
+// Update member data
+router.put('/api/protected/memberUpdate/:memberCode', async (req, res) => {
+  const { memberCode } = req.params
+  const updateData = req.body
+
+  try {
+    const updatedMember = await usersInfo.findOneAndUpdate({ memberCode }, updateData, {
+      new: true,
+      runValidators: true
+    })
+
+    if (!updatedMember) {
+      return res.status(404).json({ message: 'Member not found' })
+    }
+
+    res.status(200).json(updatedMember)
+  } catch (error) {
+    console.error('Error updating member:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+// Route to delete member
+router.delete('/api/protected/deleteMember/:memberCode', async (req, res) => {
+  const { memberCode } = req.params
+
+  try {
+    // Find the member to get the usersID
+    const memberToDelete = await usersInfo.findOne({ memberCode })
+
+    if (!memberToDelete) {
+      return res.status(404).json({ message: 'Member not found' })
+    }
+
+    const userId = memberToDelete.usersID
+
+    // Delete the member
+    await usersInfo.findOneAndDelete({ memberCode })
+
+    // Delete the corresponding user
+    await User.findByIdAndDelete(userId)
+
+    res.json({ message: 'Member and corresponding user deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting member and user:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 module.exports = router
