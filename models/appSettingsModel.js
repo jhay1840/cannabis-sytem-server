@@ -12,6 +12,10 @@ const SettingsSchema = new Schema(
       type: String,
       default: '/images/logos/bornhigh.svg' // Default path or URL to the app logo
     },
+    appDomainLink: {
+      type: String,
+      default: 'http://localhost:3000' // Default path or URL to the app logo
+    },
     idTypes: {
       type: [String],
       default: ['ID', 'Passport', "Driver's License"] // Default ID types

@@ -74,6 +74,7 @@ router.put('/api/protected/updateSettings', async (req, res) => {
       settings = new Settings()
     }
     settings.appName = appName
+
     settings.idTypes = idTypes
     settings.estimatedConsumption = estimatedConsumption
     settings.cannabisCategories = cannabisCategories
