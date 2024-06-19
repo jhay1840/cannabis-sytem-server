@@ -6,7 +6,7 @@ const cors = require('cors')
 
 app.use(
   cors({
-    origin: ['http://localhost:3000'],
+    origin: [process.env.CLIENT_URL],
     optionsSuccessStatus: 200,
     credentials: true
   })
