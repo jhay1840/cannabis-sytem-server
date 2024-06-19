@@ -11,6 +11,13 @@ app.use(
     credentials: true
   })
 )
+app.options('/login', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL)
+  res.setHeader('Access-Control-Allow-Methods', 'POST') // Adjust allowed methods as needed
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization') // Adjust allowed headers as needed
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.status(204).end() // No content in response to OPTIONS
+})
 // Log headers
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', process.env.CLIENT_URL)
