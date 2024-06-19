@@ -4,6 +4,9 @@ const dotenv = require('dotenv')
 const app = express()
 const cors = require('cors')
 
+// Load environment variables from .env file
+dotenv.config()
+
 app.use(
   cors({
     origin: [process.env.CLIENT_URL],
@@ -11,19 +14,7 @@ app.use(
     credentials: true
   })
 )
-app.options('/login', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL)
-  res.setHeader('Access-Control-Allow-Methods', 'POST') // Adjust allowed methods as needed
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization') // Adjust allowed headers as needed
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.status(204).end() // No content in response to OPTIONS
-})
-// Log headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.CLIENT_URL)
-  console.log('Response headers:', res.getHeaders())
-  next()
-})
+
 // app.use(cors());
 
 // create model user on mongo
@@ -60,9 +51,6 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   })
 )
-
-// Load environment variables from .env file
-dotenv.config()
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
