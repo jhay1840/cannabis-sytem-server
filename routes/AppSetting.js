@@ -19,7 +19,8 @@ router.use(express.json())
 
 // Middleware to authenticate the user
 function authenticateTokenUser(req, res, next) {
-  const token = req.session.token
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
   }
@@ -33,7 +34,8 @@ function authenticateTokenUser(req, res, next) {
   })
 }
 function authenticateToken(req, res, next) {
-  const token = req.session.token
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
   }

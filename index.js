@@ -40,7 +40,7 @@ const appSettings = require('./routes/AppSetting')
 const cookieSession = require('cookie-session')
 
 app.get('/', (req, res) => {
-  res.send('Hello')
+  res.send('Hello' + [process.env.CLIENT_URL])
 })
 
 app.use(

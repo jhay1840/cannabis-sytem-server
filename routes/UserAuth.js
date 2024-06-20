@@ -41,7 +41,9 @@ output: user
 */
 // Middleware to authenticate the user
 function authenticateTokenUser(req, res, next) {
-  const token = req.session.token
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
   }
@@ -55,7 +57,9 @@ function authenticateTokenUser(req, res, next) {
   })
 }
 function authenticateToken(req, res, next) {
-  const token = req.session.token
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
   }
@@ -104,7 +108,6 @@ router.post('/login', async (req, res) => {
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      console.log(user.password)
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
@@ -132,8 +135,10 @@ router.post('/login', async (req, res) => {
 Check token and user type
 */
 router.get('/api/public/user-type', (req, res) => {
-  const token = req.session.token
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
   const isLoggedIn = 'false'
+  console.log(token)
   if (token == null) {
     return res.json(isLoggedIn)
   } else {
