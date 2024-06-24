@@ -31,7 +31,6 @@ const cannabisMovementSchema = new Schema({
 // Pre-save middleware to generate auto-incrementing transaction ID
 cannabisMovementSchema.pre('save', async function (next) {
   if (!this.isNew) {
-    // If the document is not new, skip generating the ID
     return next()
   }
 
@@ -39,15 +38,21 @@ cannabisMovementSchema.pre('save', async function (next) {
     // Find the latest transaction ID from the database
     const latestMovement = await this.constructor.findOne({}, {}, { sort: { transactionId: -1 } })
 
-    // Extract the numeric part of the latest transaction ID and increment it
+    // Log the latest movement and nextIdNumber for debugging
+    console.log('Latest Movement:', latestMovement)
+
     let nextIdNumber = 1
     if (latestMovement && latestMovement.transactionId) {
       const lastIdNumber = parseInt(latestMovement.transactionId.replace('TRN', ''), 10)
       nextIdNumber = lastIdNumber + 1
     }
 
+    // Log the calculated nextIdNumber for debugging
+    console.log('Next ID Number:', nextIdNumber)
+
     // Format the new transaction ID with leading zeros
     const formattedId = `TRN${nextIdNumber.toString().padStart(5, '0')}`
+    console.log('Generated transaction ID:', formattedId)
     this.transactionId = formattedId
 
     next()
