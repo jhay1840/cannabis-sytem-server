@@ -10,7 +10,7 @@ dotenv.config()
 app.use(
   cors({
     // origin: [process.env.CLIENT_URL],
-    origin: 'http://3.87.201.111:3000/',
+    origin: 'http://3.87.201.111:3000',
     optionsSuccessStatus: 200,
     credentials: true
   })
