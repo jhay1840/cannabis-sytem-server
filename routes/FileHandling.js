@@ -1,12 +1,21 @@
 const express = require('express')
 const router = express.Router()
 const multer = require('multer')
+const multerS3 = require('multer-s3')
 const path = require('path')
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
-const fs = require('fs')
-
+const { S3Client } = require('@aws-sdk/client-s3')
 const Products = mongoose.model('cannabisproducts')
+
+// Configure AWS SDK
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+})
 
 // Middleware to authenticate the user
 function authenticateTokenUser(req, res, next) {
@@ -15,15 +24,15 @@ function authenticateTokenUser(req, res, next) {
   if (token == null) {
     return res.sendStatus(401) // Unauthorized
   }
-  req.user = user
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       return res.sendStatus(403) // Forbidden
     }
-
+    req.user = user
     next()
   })
 }
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
@@ -37,8 +46,8 @@ function authenticateToken(req, res, next) {
     }
 
     // Assuming the token contains a user object with a role property
-    if (req.user.userRole !== 'superadmin' && req.user.userRole !== 'admin') {
-      return res.sendStatus(403).send(req.user.userRole) // Forbidden
+    if (user.userRole !== 'superadmin' && user.userRole !== 'admin') {
+      return res.sendStatus(403) // Forbidden
     }
 
     req.user = user
@@ -49,59 +58,47 @@ function authenticateToken(req, res, next) {
 router.use('/api/user/protected/', authenticateTokenUser)
 router.use('/api/protected/', authenticateToken)
 
-// pdf storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/contracts/pdf') // Specify the directory where you want to store the files
+// Configure multer storage for S3
+const s3Storage = multerS3({
+  s3: s3,
+  bucket: process.env.AWS_BUCKET_NAME,
+
+  metadata: (req, file, cb) => {
+    cb(null, { fieldName: file.fieldname })
   },
-  filename: (req, file, cb) => {
-    const memberID = req.params.memberID
+  key: (req, file, cb) => {
+    const productName = req.params.productName.replace(/\s+/g, '-').toLowerCase() // Adjust for product name
     const date = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '') // Format date
-    const filename = `${memberID}_(${date})_contract${path.extname(file.originalname)}`
+    const filename = `product-images/${productName}/${date}_${file.fieldname}${path.extname(file.originalname)}` // Include folder path
+    cb(null, filename)
+  }
+})
+const upload = multer({ storage: s3Storage })
+// Configure multer storage for S3 for signature files
+const signatureStorage = multerS3({
+  s3: s3,
+  bucket: process.env.AWS_BUCKET_NAME, // Replace with your bucket name
+
+  metadata: (req, file, cb) => {
+    cb(null, { fieldName: file.fieldname })
+  },
+  key: (req, file, cb) => {
+    const memberID = req.params.memberID || req.params.productName
+    const date = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '') // Format date
+    const filename = `signature/${memberID}_${date}_${file.fieldname}${path.extname(file.originalname)}` // Include folder path
     cb(null, filename)
   }
 })
 
-// signature storage
-const sign_storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/contracts/signatures') // Specify the directory where you want to store the files
-  },
-  filename: (req, file, cb) => {
-    const memberID = req.params.memberID
-    const date = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '') // Format date
-    const filename = `${memberID}_(${date})_signature${path.extname(file.originalname)}`
-    cb(null, filename)
-  }
-})
-
-// Product Image storage
-const prod_storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/products/product_image') // Specify the directory where you want to store the files
-  },
-  filename: (req, file, cb) => {
-    const productName = req.params.productName
-    const date = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '') // Format date
-    const filename = `${productName}_(${date})_product${path.extname(file.originalname)}`
-    cb(null, filename)
-  }
-})
-
-const upload = multer({ storage })
-const upload_sign = multer({ storage: sign_storage })
-const upload_productImage = multer({ storage: prod_storage })
+const uploadSignature = multer({ storage: signatureStorage })
 
 router.post('/api/upload/contract/:memberID', authenticateToken, upload.single('upload'), (req, res) => {
   try {
     if (!req.file) {
-      // No file provided
       return res.status(400).send('No file uploaded')
     }
-
-    // Handle the file upload here, e.g., save the file path to a database
-    const filePath = req.file.path
-    console.log('File saved at:', filePath)
+    const fileUrl = req.file.location
+    console.log('File uploaded to:', fileUrl)
     res.send('File uploaded successfully')
   } catch (error) {
     console.error('Error handling contract file upload:', error)
@@ -109,17 +106,14 @@ router.post('/api/upload/contract/:memberID', authenticateToken, upload.single('
   }
 })
 
-router.post('/api/upload/signature/:memberID', authenticateToken, upload_sign.single('upload'), (req, res) => {
+router.post('/api/upload/signature/:memberID', authenticateToken, uploadSignature.single('upload'), (req, res) => {
   try {
     if (!req.file) {
-      // No file provided
       return res.status(400).send('No file uploaded')
     }
-
-    // Handle the file upload here, e.g., save the file path to a database
-    const filePath = req.file.path
-    console.log('File saved at:', filePath)
-    res.send('File uploaded successfully')
+    const fileUrl = req.file.location
+    console.log('Signature uploaded to:', fileUrl)
+    res.send('Signature uploaded successfully')
   } catch (error) {
     console.error('Error handling signature file upload:', error)
     res.status(500).send('Internal Server Error')
@@ -129,28 +123,15 @@ router.post('/api/upload/signature/:memberID', authenticateToken, upload_sign.si
 router.post(
   '/api/protected/upload/product/:productName',
   authenticateToken,
-  upload_productImage.single('productImage'),
+  upload.single('productImage'),
   (req, res) => {
     try {
-      if (req.file) {
-        // Handle the file upload here, e.g., save the file path to a database
-        const tempPath = req.file.path
-        const targetPath = path.join(__dirname, '..', '..', 'public', 'images', 'productImages', req.file.filename)
-
-        fs.rename(tempPath, targetPath, err => {
-          if (err) return res.status(500).send(err)
-
-          // File moved successfully, you can send a response or do further processing here
-          const indexOfImages = targetPath.indexOf('\\images')
-
-          // Extract the portion of the path starting from "/images"
-          const modifiedPath = targetPath.substring(indexOfImages)
-          res.send(modifiedPath)
-        })
-      } else {
-        // No file provided
-        res.send('')
+      if (!req.file) {
+        return res.status(400).send('No file uploaded')
       }
+      const fileUrl = req.file.location
+      console.log('File uploaded to:', fileUrl)
+      res.send(fileUrl)
     } catch (error) {
       console.error('Error handling product image file upload:', error)
       res.status(500).send('Internal Server Error')
@@ -158,8 +139,7 @@ router.post(
   }
 )
 
-//---------------------------------------------------------------------------------------------
-// endpoint for adding products
+// Endpoint for adding products
 router.post('/api/protected/addProduct', async (req, res) => {
   const {
     name,
@@ -180,8 +160,8 @@ router.post('/api/protected/addProduct', async (req, res) => {
   try {
     const createProduct = await Products.create({
       name,
-      secondBreed: secondBreed,
-      type: type,
+      secondBreed,
+      type,
       sativaPercent: sativa,
       THCpercent: thc,
       CBDpercent: cbd,
@@ -199,12 +179,11 @@ router.post('/api/protected/addProduct', async (req, res) => {
     res.status(201).json({ product: createProduct })
   } catch (error) {
     console.error(error) // Log the error for debugging purposes
-
     res.status(500).json({ error: 'Internal Server Error', details: error.message })
   }
 })
-//---------------------------------------------------------------------------------------------
-// endpoint for updating products
+
+// Endpoint for updating products
 router.post('/api/protected/updateProduct', async (req, res) => {
   const {
     id,
@@ -224,7 +203,6 @@ router.post('/api/protected/updateProduct', async (req, res) => {
   } = req.body
 
   try {
-    // Find the product by its ID and update it
     const updatedProduct = await Products.findOneAndUpdate(
       { _id: id },
       {
