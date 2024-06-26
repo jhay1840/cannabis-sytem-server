@@ -251,94 +251,161 @@ router.post('/api/protected/register', async (req, res) => {
       .replace('{consumption}', consumption)
 
     // Create a PDF document
-    const pdfFilePath = path.join(
-      __dirname,
-      '..',
-      'uploads',
-      'contracts',
-      'pdf',
-      `membership_contract-${createdUserInfo.memberCode}.pdf`
-    )
-    htmlPdf.create(finalHtml).toFile(pdfFilePath, (err, result) => {
-      if (err) {
-        console.error(err)
-        throw new Error('Error converting HTML to PDF')
-      }
+    // const pdfFilePath = path.join(
+    //   __dirname,
+    //   '..',
+    //   'uploads',
+    //   'contracts',
+    //   'pdf',
+    //   `membership_contract-${createdUserInfo.memberCode}.pdf`
+    // )
+    // htmlPdf.create(finalHtml).toFile(pdfFilePath, (err, result) => {
+    //   if (err) {
+    //     console.error(err)
+    //     throw new Error('Error converting HTML to PDF')
+    //   }
 
-      // Send confirmation email
-      const mailOptions = {
-        from: 'hello@cannabishealth.co.za',
-        to: email,
-        subject: 'Bornhigh Email Confirmation',
-        html: `
-      <h1>Confirm Your Email Address</h1>
-      <p>Please click on the following link to confirm your email address:</p>
-      <a href="${process.env.CLIENT_URL + '/confirm-email/' + createdUser.id}">${
-          process.env.CLIENT_URL + '/confirm-email/' + createdUser.id
-        }</a>
+    //   // Send confirmation email
+    //   const mailOptions = {
+    //     from: 'hello@cannabishealth.co.za',
+    //     to: email,
+    //     subject: 'Bornhigh Email Confirmation',
+    //     html: `
+    //   <h1>Confirm Your Email Address</h1>
+    //   <p>Please click on the following link to confirm your email address:</p>
+    //   <a href="${process.env.CLIENT_URL + '/confirm-email/' + createdUser.id}">${
+    //       process.env.CLIENT_URL + '/confirm-email/' + createdUser.id
+    //     }</a>
+    // `
+    //   }
+    //   const welcomeEmail = {
+    //     from: 'hello@cannabishealth.co.za',
+    //     to: email,
+    //     subject: 'Welcome to Born High - Your Passport to Premium Cannabis Cultivation',
+    //     html: `
+    //     <p>Dear ${firstName},</p>
+
+    //     <p>Welcome to <a href="http://www.bornhigh.co.za">Born High</a>, where passion meets cultivation, and every strain tells a story of our unwavering commitment to providing premium local genetics. We are thrilled to have you join our close-knit family of cannabis enthusiasts who appreciate the art of breeding and the joy of pheno hunting.</p>
+
+    //     <p>Please find your signed contract attached to this email for your reference.</p>
+
+    //     <p><strong>About Born High:</strong></p>
+    //     <p>Born High is a Cape Town-based cannabis company with a rich history of cultivation spanning over 30 years. Our roots extend across the globe, from the lush landscapes of Hawaii, California, Ireland, Morocco, Lesotho, to the breathtaking Western Cape of South Africa. Our pride lies in crafting unique genetics, driven by a profound passion for cultivation.</p>
+
+    //     <p><strong>Our Mission:</strong></p>
+    //     <p>Our mission is singular and focused—the art of breeding and pheno hunting. We tirelessly explore and uncover hidden gems to enrich the Born High connoisseur’s library. Regardless of our growth, we remain a close-knit family of dedicated individuals, all working towards delivering the highest quality cannabis possible.</p>
+
+    //     <p><strong>A Global Essence, Rooted in Cape Town:</strong></p>
+    //     <p>While our roots may stretch across the globe, our essence is firmly rooted in representing Cape Town, South Africa, with pride. As we expand, we maintain our commitment to being a small company with a big heart. Our clear focus is on consistently producing top-tier cannabis, showcasing the very best that Cape Town has to offer.</p>
+
+    //     <p><strong>Connect with Us:</strong></p>
+    //     <p>To stay updated with our latest strains, events, and exclusive offerings, make sure to explore our website. You can also connect with us on Instagram for a visual journey into the world of Born High:</p>
+    //     <ul>
+    //       <li>Born High Social Club: <a href="https://www.instagram.com/bornhighcpt">https://www.instagram.com/bornhighcpt</a></li>
+    //       <li>Born High Genetics: <a href="https://www.instagram.com/bornhighgenetics/">https://www.instagram.com/bornhighgenetics/</a></li>
+    //     </ul>
+
+    //     <p><strong>Your Journey with Born High:</strong></p>
+    //     <p>Explore our diverse selection of premium cannabis strains and embark on a journey where each strain carries the essence of our enduring commitment to excellence. Every strain in our collection tells a unique story, and we are excited for you to become a part of it.</p>
+
+    //     <p>Thank you for choosing Born High. Together, let us celebrate the art, passion, and joy of cannabis cultivation.</p>
+
+    //     <p>Best regards,<br>The Born High Team</p>
+    //   `,
+    //     attachments: [
+    //       {
+    //         filename: 'membership_contract.pdf',
+    //         path: path.join(__dirname, 'membership_contract.pdf')
+    //       }
+    //     ]
+    //   }
+
+    //   transporter.sendMail(mailOptions, (error, info) => {
+    //     if (error) {
+    //       console.log(error)
+    //     } else {
+    //       console.log('Email sent: ' + info.response)
+    //     }
+    //   })
+    //   transporter.sendMail(welcomeEmail, (error, info) => {
+    //     if (error) {
+    //       console.log(error)
+    //     } else {
+    //       console.log('Email sent: ' + info.response)
+    //     }
+    //   })
+
+    //   const memberCode = createdUserInfo.memberCode
+
+    //   res.status(201).json({ memberCode })
+    // })
+    // Send confirmation email
+    const mailOptions = {
+      from: 'hello@cannabishealth.co.za',
+      to: email,
+      subject: 'Bornhigh Email Confirmation',
+      html: `
+    <h1>Confirm Your Email Address</h1>
+    <p>Please click on the following link to confirm your email address:</p>
+    <a href="${process.env.CLIENT_URL + '/confirm-email/' + createdUser.id}">${
+        process.env.CLIENT_URL + '/confirm-email/' + createdUser.id
+      }</a>
+  `
+    }
+    const welcomeEmail = {
+      from: 'hello@cannabishealth.co.za',
+      to: email,
+      subject: 'Welcome to Born High - Your Passport to Premium Cannabis Cultivation',
+      html: `
+      <p>Dear ${firstName},</p>
+  
+      <p>Welcome to <a href="http://www.bornhigh.co.za">Born High</a>, where passion meets cultivation, and every strain tells a story of our unwavering commitment to providing premium local genetics. We are thrilled to have you join our close-knit family of cannabis enthusiasts who appreciate the art of breeding and the joy of pheno hunting.</p>
+  
+      <p>Please find your signed contract attached to this email for your reference.</p>
+  
+      <p><strong>About Born High:</strong></p>
+      <p>Born High is a Cape Town-based cannabis company with a rich history of cultivation spanning over 30 years. Our roots extend across the globe, from the lush landscapes of Hawaii, California, Ireland, Morocco, Lesotho, to the breathtaking Western Cape of South Africa. Our pride lies in crafting unique genetics, driven by a profound passion for cultivation.</p>
+  
+      <p><strong>Our Mission:</strong></p>
+      <p>Our mission is singular and focused—the art of breeding and pheno hunting. We tirelessly explore and uncover hidden gems to enrich the Born High connoisseur’s library. Regardless of our growth, we remain a close-knit family of dedicated individuals, all working towards delivering the highest quality cannabis possible.</p>
+  
+      <p><strong>A Global Essence, Rooted in Cape Town:</strong></p>
+      <p>While our roots may stretch across the globe, our essence is firmly rooted in representing Cape Town, South Africa, with pride. As we expand, we maintain our commitment to being a small company with a big heart. Our clear focus is on consistently producing top-tier cannabis, showcasing the very best that Cape Town has to offer.</p>
+  
+      <p><strong>Connect with Us:</strong></p>
+      <p>To stay updated with our latest strains, events, and exclusive offerings, make sure to explore our website. You can also connect with us on Instagram for a visual journey into the world of Born High:</p>
+      <ul>
+        <li>Born High Social Club: <a href="https://www.instagram.com/bornhighcpt">https://www.instagram.com/bornhighcpt</a></li>
+        <li>Born High Genetics: <a href="https://www.instagram.com/bornhighgenetics/">https://www.instagram.com/bornhighgenetics/</a></li>
+      </ul>
+  
+      <p><strong>Your Journey with Born High:</strong></p>
+      <p>Explore our diverse selection of premium cannabis strains and embark on a journey where each strain carries the essence of our enduring commitment to excellence. Every strain in our collection tells a unique story, and we are excited for you to become a part of it.</p>
+  
+      <p>Thank you for choosing Born High. Together, let us celebrate the art, passion, and joy of cannabis cultivation.</p>
+  
+      <p>Best regards,<br>The Born High Team</p>
     `
+    }
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error)
+      } else {
+        console.log('Email sent: ' + info.response)
       }
-      const welcomeEmail = {
-        from: 'hello@cannabishealth.co.za',
-        to: email,
-        subject: 'Welcome to Born High - Your Passport to Premium Cannabis Cultivation',
-        html: `
-        <p>Dear ${firstName},</p>
-    
-        <p>Welcome to <a href="http://www.bornhigh.co.za">Born High</a>, where passion meets cultivation, and every strain tells a story of our unwavering commitment to providing premium local genetics. We are thrilled to have you join our close-knit family of cannabis enthusiasts who appreciate the art of breeding and the joy of pheno hunting.</p>
-    
-        <p>Please find your signed contract attached to this email for your reference.</p>
-    
-        <p><strong>About Born High:</strong></p>
-        <p>Born High is a Cape Town-based cannabis company with a rich history of cultivation spanning over 30 years. Our roots extend across the globe, from the lush landscapes of Hawaii, California, Ireland, Morocco, Lesotho, to the breathtaking Western Cape of South Africa. Our pride lies in crafting unique genetics, driven by a profound passion for cultivation.</p>
-    
-        <p><strong>Our Mission:</strong></p>
-        <p>Our mission is singular and focused—the art of breeding and pheno hunting. We tirelessly explore and uncover hidden gems to enrich the Born High connoisseur’s library. Regardless of our growth, we remain a close-knit family of dedicated individuals, all working towards delivering the highest quality cannabis possible.</p>
-    
-        <p><strong>A Global Essence, Rooted in Cape Town:</strong></p>
-        <p>While our roots may stretch across the globe, our essence is firmly rooted in representing Cape Town, South Africa, with pride. As we expand, we maintain our commitment to being a small company with a big heart. Our clear focus is on consistently producing top-tier cannabis, showcasing the very best that Cape Town has to offer.</p>
-    
-        <p><strong>Connect with Us:</strong></p>
-        <p>To stay updated with our latest strains, events, and exclusive offerings, make sure to explore our website. You can also connect with us on Instagram for a visual journey into the world of Born High:</p>
-        <ul>
-          <li>Born High Social Club: <a href="https://www.instagram.com/bornhighcpt">https://www.instagram.com/bornhighcpt</a></li>
-          <li>Born High Genetics: <a href="https://www.instagram.com/bornhighgenetics/">https://www.instagram.com/bornhighgenetics/</a></li>
-        </ul>
-    
-        <p><strong>Your Journey with Born High:</strong></p>
-        <p>Explore our diverse selection of premium cannabis strains and embark on a journey where each strain carries the essence of our enduring commitment to excellence. Every strain in our collection tells a unique story, and we are excited for you to become a part of it.</p>
-    
-        <p>Thank you for choosing Born High. Together, let us celebrate the art, passion, and joy of cannabis cultivation.</p>
-    
-        <p>Best regards,<br>The Born High Team</p>
-      `,
-        attachments: [
-          {
-            filename: 'membership_contract.pdf',
-            path: path.join(__dirname, 'membership_contract.pdf')
-          }
-        ]
-      }
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error)
-        } else {
-          console.log('Email sent: ' + info.response)
-        }
-      })
-      transporter.sendMail(welcomeEmail, (error, info) => {
-        if (error) {
-          console.log(error)
-        } else {
-          console.log('Email sent: ' + info.response)
-        }
-      })
-
-      const memberCode = createdUserInfo.memberCode
-
-      res.status(201).json({ memberCode })
     })
+    transporter.sendMail(welcomeEmail, (error, info) => {
+      if (error) {
+        console.log(error)
+      } else {
+        console.log('Email sent: ' + info.response)
+      }
+    })
+
+    const memberCode = createdUserInfo.memberCode
+
+    res.status(201).json({ memberCode })
   } catch (error) {
     console.error(error) // Log the error for debugging purposes
 
