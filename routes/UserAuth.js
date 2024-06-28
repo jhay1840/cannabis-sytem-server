@@ -207,8 +207,8 @@ router.post('/api/protected/register', async (req, res) => {
       updatedAt: Date.now(),
       confirmationCode: '', // Use the user ID as the confirmation code
       confirmed: false,
-      resetToken,
-      resetTokenExpire
+      resetToken: resetToken,
+      resetTokenExpire: resetTokenExpire
     })
     createdUser.confirmationCode = createdUser.id
     await createdUser.save()
