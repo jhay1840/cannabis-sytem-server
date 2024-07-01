@@ -419,20 +419,6 @@ router.post('/api/protected/register', async (req, res) => {
       consumption
     })
 
-    const finalHtml = htmlTemplate
-      .replace('{fname}', firstName)
-      .replace('{{lname}}', lastName)
-      .replace('{preferred}', email)
-      .replace('{date}', Date.now())
-      .replace('{email}', email)
-      .replace('{phone}', phone)
-      .replace('{dateOfBirth}', dateOfBirth)
-      .replace('{idType}', idType)
-      .replace('{idNumber}', idOrPassportNumber)
-      .replace('{whatsapp}', receiveUpdates)
-      .replace('{newsletter}', subscribeToNewsletter)
-      .replace('{consumption}', consumption)
-
     // Send confirmation email
     const mailOptions = {
       from: 'hello@cannabishealth.co.za',
