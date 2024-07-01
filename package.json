@@ -25,7 +25,6 @@
     "multer-s3": "^3.0.1",
     "next-qrcode": "^2.5.1",
     "nodemailer": "^6.9.9",
-    "pdfkit": "^0.15.0",
     "phantom-html2pdf": "^4.0.2"
   }
 }
